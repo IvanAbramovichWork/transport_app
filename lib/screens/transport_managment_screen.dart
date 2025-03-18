@@ -8,19 +8,24 @@ class TransportManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final transportProvider = Provider.of<TransportProvider>(context, listen: false);
 
+    // Загружаем транспорт только один раз при первом построении
+    Future<void> loadData() async {
+      await transportProvider.loadTransports();
+    }
+
+    // Вызываем loadData один раз
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadData();
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Manage Transport"),
       ),
-      body: FutureBuilder(
-        future: transportProvider.loadTransports(), // Загружаем транспорт
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Consumer<TransportProvider>(
+        builder: (context, transportProvider, child) {
+          if (transportProvider.transports.isEmpty) {
             return Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Ошибка загрузки транспорта: ${snapshot.error}'));
           }
 
           return ListView.builder(
@@ -30,17 +35,11 @@ class TransportManagementScreen extends StatelessWidget {
               return ListTile(
                 title: Text("${transport.model}"),
                 subtitle: Text("License Plate: ${transport.licensePlate}"),
-                trailing: Switch(
-                  value: transport.availability,
-                  onChanged: (bool newValue) {
-                    transportProvider.updateTransport(
-                      Transport(
-                        id: transport.id,
-                        model: transport.model,
-                        licensePlate: transport.licensePlate,
-                        availability: newValue,
-                      ),
-                    );
+                trailing: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red), // Кнопка удаления
+                  onPressed: () {
+                    // Удаляем транспорт
+                    transportProvider.deleteTransport(transport.id);
                   },
                 ),
               );
@@ -56,6 +55,9 @@ class TransportManagementScreen extends StatelessWidget {
   }
 
   void _showAddTransportDialog(BuildContext context, TransportProvider transportProvider) {
+    final modelController = TextEditingController();
+    final licensePlateController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -65,9 +67,11 @@ class TransportManagementScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: modelController,
                 decoration: InputDecoration(labelText: "Model"),
               ),
               TextField(
+                controller: licensePlateController,
                 decoration: InputDecoration(labelText: "License Plate"),
               ),
             ],
@@ -83,8 +87,8 @@ class TransportManagementScreen extends StatelessWidget {
                 transportProvider.addTransport(
                   Transport(
                     id: transportProvider.transports.length + 1,
-                    model: "New Model", // Замените на реальные данные
-                    licensePlate: "New License Plate", // Замените на реальные данные
+                    model: modelController.text, // Используем введенные данные
+                    licensePlate: licensePlateController.text, // Используем введенные данные
                     availability: true,
                   ),
                 );

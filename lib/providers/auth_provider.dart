@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,14 +21,24 @@ class AuthProvider with ChangeNotifier {
 
   // Метод для входа
   Future<void> login(String email, String password) async {
-    final dbHelper = DatabaseHelper.instance;
-    final user = await dbHelper.getUserByEmail(email);
-
-    if (user != null && user.password == password) {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       _isLoggedIn = true;
-      _email = user.email;
-      _userId = user.id;
-      _userType = user.userType;
+      String userId = email;
+      Map<String, dynamic>? userData = await getUserData(userId);
+      if (userData?['userType'] == "client") {
+        _userType = UserType.client;
+      } else if (userData?['userType'] == "employee") {
+        _userType = UserType.employee;
+      }
+      else {
+        throw("unknown user type");
+      }
+      _email = email;
+      _userId = userData?['id'];
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setBool('isLoggedIn', _isLoggedIn);
@@ -34,8 +46,9 @@ class AuthProvider with ChangeNotifier {
       prefs.setString('userType', _userType.toString());
       prefs.setInt('userId', _userId!); // Сохраняем userId
       notifyListeners();
-    } else {
-      throw Exception('Неверный email или пароль');
+      print('User signed in: ${userCredential.user!.uid}');
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -65,5 +78,22 @@ class AuthProvider with ChangeNotifier {
       _userType = userTypeString == 'UserType.employee' ? UserType.employee : UserType.client;
     }
     notifyListeners();
+  }
+}
+Future<Map<String, dynamic>?> getUserData(String userId) async {
+  try {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+
+    if (userDoc.exists) {
+      return userDoc.data() as Map<String, dynamic>;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print('Error: $e');
+    return null;
   }
 }

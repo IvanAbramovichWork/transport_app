@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,25 +15,22 @@ import 'models/user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+      options: FirebaseOptions(
+        apiKey: "AIzaSyBPG-6lsv13cvJ0IIFC1U8Do811Sgd9K0M",
+        authDomain: "transport-app-91d56.firebaseapp.com",
+        projectId: "transport-app-91d56",
+        storageBucket: "transport-app-91d56.firebasestorage.app",
+        messagingSenderId: "458113905080",
+        appId: "1:458113905080:web:1ef3525c62388d06cb5f4d",
+      ),
+  );
   if (!kIsWeb) {
     await DatabaseHelper.instance.database;
   }
   // Добавляем тестовых пользователей
   final dbHelper = DatabaseHelper.instance;
-  await dbHelper.insertUser(User(
-    id: 1,
-    name: 'Employee',
-    email: 'employee@test.com',
-    password: 'password',
-    userType: UserType.employee,
-  ));
-  await dbHelper.insertUser(User(
-    id: 2,
-    name: 'Client',
-    email: 'client@test.com',
-    password: 'password',
-    userType: UserType.client,
-  ));
+
   // Добавляем тестовый транспорт
   await dbHelper.insertTransport(Transport(
     id: 1,

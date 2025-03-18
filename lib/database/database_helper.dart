@@ -47,16 +47,6 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // Создаем таблицу users
-    await db.execute('''
-    CREATE TABLE users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL,
-      userType TEXT NOT NULL
-    )
-  ''');
     // Создаем таблицу transports
     await db.execute('''
     CREATE TABLE transports (
@@ -79,33 +69,8 @@ class DatabaseHelper {
     )
   ''');
   }
-  // Добавление пользователя
-  Future<int> insertUser(User user) async {
-    final db = await database;
-    return await db.insert('users', user.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-  }
 
-  // Получение пользователя по email
-  Future<User?> getUserByEmail(String email) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
 
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
-    }
-    return null;
-  }
-
-  // Получение всех пользователей
-  Future<List<User>> getAllUsers() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('users');
-    return maps.map((map) => User.fromMap(map)).toList();
-  }
   Future<int> insertTransport(Transport transport) async {
     final db = await database;
     return await db.insert('transports', transport.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);

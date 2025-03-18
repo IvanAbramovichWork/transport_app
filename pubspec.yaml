@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_core: ^3.0.0  # Основной пакет Firebase
+  firebase_auth: ^5.5.1  # Для аутентификации (опционально)
+  cloud_firestore: ^5.6.5  # Для Firestore (опционально)
   provider: ^6.0.0
   shared_preferences: ^2.0.15
   sqflite: ^2.3.0
